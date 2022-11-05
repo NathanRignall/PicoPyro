@@ -1,0 +1,27 @@
+EESchema-LIBRARY Version 2.3
+#encoding utf-8
+#SamacSys ECAD Model TB005-762-06BE
+#/11577802/525252/2.49/6/4/Connector
+DEF TB005-762-06BE J 0 30 Y Y 1 F N
+F0 "J" 650 300 50 H V L CNN
+F1 "TB005-762-06BE" 650 200 50 H V L CNN
+F2 "TB00576206BE" 650 100 50 H I L CNN
+F3 "https://www.cuidevices.com/product/resource/digikeypdf/tb005-762.pdf" 650 0 50 H I L CNN
+F4 "Fixed Terminal Blocks Terminal block, screw type, 7.62 , horizontal, 6 poles, CUI Blue, slotted screw, PCB mount" 650 -100 50 H I L CNN "Description"
+F5 "21.7" 650 -200 50 H I L CNN "Height"
+F6 "490-TB005-762-06BE" 650 -300 50 H I L CNN "Mouser Part Number"
+F7 "https://www.mouser.co.uk/ProductDetail/CUI-Devices/TB005-762-06BE?qs=vLWxofP3U2x7s1VWG66MIA%3D%3D" 650 -400 50 H I L CNN "Mouser Price/Stock"
+F8 "CUI Inc." 650 -500 50 H I L CNN "Manufacturer_Name"
+F9 "TB005-762-06BE" 650 -600 50 H I L CNN "Manufacturer_Part_Number"
+DRAW
+X 1 1 0 0 200 R 50 50 0 0 P
+X 2 2 0 -100 200 R 50 50 0 0 P
+X 3 3 0 -200 200 R 50 50 0 0 P
+X 4 4 0 -300 200 R 50 50 0 0 P
+X 5 5 0 -400 200 R 50 50 0 0 P
+X 6 6 0 -500 200 R 50 50 0 0 P
+P 5 0 1 6 200 100 600 100 600 -600 200 -600 200 100 N
+ENDDRAW
+ENDDEF
+#
+#End Library

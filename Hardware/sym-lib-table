@@ -1,0 +1,9 @@
+(sym_lib_table
+  (lib (name "MCU_RaspberryPi_and_Boards")(type "KiCad")(uri "${KIPRJMOD}/Libs/MCU_RaspberryPi_and_Boards.kicad_sym")(options "")(descr ""))
+  (lib (name "TQL850CSV50")(type "Legacy")(uri "${KIPRJMOD}/Libs/TQL850CSV50.lib")(options "")(descr ""))
+  (lib (name "TPH9R506PL_LQ")(type "Legacy")(uri "${KIPRJMOD}/Libs/TPH9R506PL_LQ.lib")(options "")(descr ""))
+  (lib (name "TB005-762-02BE")(type "Legacy")(uri "${KIPRJMOD}/Libs/TB005-762-02BE.lib")(options "")(descr ""))
+  (lib (name "TS11-674-43-BK-100-RA-D")(type "Legacy")(uri "${KIPRJMOD}/Libs/TS11-674-43-BK-100-RA-D.lib")(options "")(descr ""))
+  (lib (name "DMP2120U-7")(type "Legacy")(uri "${KIPRJMOD}/Libs/DMP2120U-7.lib")(options "")(descr ""))
+  (lib (name "0679H9100-05")(type "Legacy")(uri "${KIPRJMOD}/Libs/0679H9100-05.lib")(options "")(descr ""))
+)
