@@ -1,5 +1,6 @@
 {
-    "configuration": "flash=2097152_0,freq=133,opt=Small,rtti=Disabled,stackprotect=Disabled,exceptions=Disabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,wificountry=worldwide,ipstack=ipv4only",
+    "configuration": "flash=2097152_1048576,freq=133,opt=Small,rtti=Disabled,stackprotect=Disabled,exceptions=Disabled,dbgport=Disabled,dbglvl=None,usbstack=picosdk,wificountry=worldwide,ipstack=ipv4only",
     "board": "rp2040:rp2040:rpipicow",
-    "sketch": "Software.ino"
+    "sketch": "Software.ino",
+    "port": "/dev/tty.usbmodem11401"
 }
