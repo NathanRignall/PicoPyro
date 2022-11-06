@@ -9,67 +9,14 @@
 #include <DNSServer.h>
 #include <Adafruit_NeoPixel.h>
 
-// ------ Shared types ------
-
-enum State
-{
-  BOOT,
-  ACTIVE,
-  SETTINGS,
-  FAILED
-};
-
-enum Status_Led_State
-{
-  LED_ACTIVE,
-  LED_ERROR,
-  LED_SETUP,
-  LED_FAILED
-};
-
-struct Config
-{
-  int voltage_threshold;
-
-  uint8_t dmx_address;
-
-  uint8_t dmx_pyro0_auth; // channel 1
-  uint8_t dmx_pyro1_auth; // channel 2
-
-  uint8_t dmx_pyro0_fire; // channel 3
-  uint8_t dmx_pyro1_fire; // channel 4
-};
-
-struct Inputs
-{
-  int pyro0_measure;
-  int pyro1_measure;
-};
-
-struct Outputs
-{
-  bool pyro0_led;
-  bool pyro1_led;
-
-  enum Status_Led_State status_led;
-};
-
-struct Pyro
-{
-  bool pyro0_fire;
-  bool pyro1_fire;
-};
-
-struct DMX
-{
-  bool data;
-};
+#include "software.h"
 
 // ------ Shared variables ------
 
 enum State system_state;
 struct Config system_config;
 
+bool setup_done = false;
 bool setup_config_done = false;
 bool setup_inputs_done = false;
 bool setup_outputs_done = false;
@@ -118,173 +65,13 @@ const byte DNS_PORT = 53;
 const char *ssid = "PicoPyro";
 const char *password = "itsathing";
 
-IPAddress apIP(172, 217, 28, 1);
+IPAddress apIP(10, 66, 0, 1);
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 DNSServer dnsServer;
 
 // ------ Setup functions ------
-
-bool check_config(StaticJsonDocument<1024> document)
-{
-
-  if (!document.containsKey("voltage_threshold"))
-  {
-    Serial.println("Config is missing voltage_threshold \n");
-    return false;
-  }
-
-  if (!document.containsKey("dmx_address"))
-  {
-    Serial.println("Config is missing dmx_address \n");
-    return false;
-  }
-
-  if (!document.containsKey("dmx_pyro0_auth"))
-  {
-    Serial.println("Config is missing dmx_pyro0_auth \n");
-    return false;
-  }
-
-  if (!document.containsKey("dmx_pyro1_auth"))
-  {
-    Serial.println("Config is missing dmx_pyro1_auth \n");
-    return false;
-  }
-
-  if (!document.containsKey("dmx_pyro0_fire"))
-  {
-    Serial.println("Config is missing dmx_pyro0_fire \n");
-    return false;
-  }
-
-  if (!document.containsKey("dmx_pyro1_fire"))
-  {
-    Serial.println("Config is missing dmx_pyro1_fire \n");
-    return false;
-  }
-
-  if (document["voltage_threshold"] < 0 || document["voltage_threshold"] > 1023)
-  {
-    Serial.println("Config voltage_threshold is out of bounds \n");
-    return false;
-  }
-
-  if (document["dmx_address"] < 1 || document["dmx_address"] > 251)
-  {
-    Serial.println("Config dmx_address is out of bounds \n");
-    return false;
-  }
-
-  if (document["dmx_pyro0_auth"] < 0 || document["dmx_pyro0_auth"] > 255)
-  {
-    Serial.println("Config dmx_pyro0_auth is out of bounds \n");
-    return false;
-  }
-
-  if (document["dmx_pyro1_auth"] < 0 || document["dmx_pyro1_auth"] > 255)
-  {
-    Serial.println("Config dmx_pyro1_auth is out of bounds \n");
-    return false;
-  }
-
-  if (document["dmx_pyro0_fire"] < 0 || document["dmx_pyro0_fire"] > 255)
-  {
-    Serial.println("Config dmx_pyro0_fire is out of bounds \n");
-    return false;
-  }
-
-  if (document["dmx_pyro1_fire"] < 0 || document["dmx_pyro1_fire"] > 255)
-  {
-    Serial.println("Config dmx_pyro1_fire is out of bounds \n");
-    return false;
-  }
-
-  Serial.println("Config checked \n");
-
-  return true;
-}
-
-bool save_config(StaticJsonDocument<1024> document)
-{
-
-  File file = LittleFS.open("/config.json", "w");
-
-  if (!file)
-  {
-    Serial.println("Could not open config for writing \n");
-    return false;
-  }
-
-  // check config is valid
-  if (!check_config(document))
-  {
-    Serial.println("Config is invalid \n");
-    return false;
-  }
-
-  serializeJson(document, file);
-  file.close();
-
-  Serial.println("Config saved \n");
-
-  return true;
-}
-
-bool load_config()
-{
-
-  File file = LittleFS.open("/config.json", "r");
-
-  if (!file)
-  {
-    Serial.println("Could not open config for reading \n");
-    return false;
-  }
-
-  StaticJsonDocument<1024> document;
-  DeserializationError error = deserializeJson(document, file);
-
-  if (error)
-  {
-    Serial.println("Could not parse config \n");
-    return false;
-  }
-
-  if (!check_config(document))
-  {
-    Serial.println("Config is invalid \n");
-    return false;
-  }
-
-  system_config.voltage_threshold = document["voltage_threshold"];
-  system_config.dmx_address = document["dmx_address"];
-  system_config.dmx_pyro0_auth = document["dmx_pyro0_auth"];
-  system_config.dmx_pyro1_auth = document["dmx_pyro1_auth"];
-  system_config.dmx_pyro0_fire = document["dmx_pyro0_fire"];
-  system_config.dmx_pyro1_fire = document["dmx_pyro1_fire"];
-
-  // print system config to serial
-  Serial.print("voltage_threshold: ");
-  Serial.println(system_config.voltage_threshold);
-  Serial.print("dmx_address: ");
-  Serial.println(system_config.dmx_address);
-  Serial.print("dmx_pyro0_auth: ");
-  Serial.println(system_config.dmx_pyro0_auth);
-  Serial.print("dmx_pyro1_auth: ");
-  Serial.println(system_config.dmx_pyro1_auth);
-  Serial.print("dmx_pyro0_fire: ");
-  Serial.println(system_config.dmx_pyro0_fire);
-  Serial.print("dmx_pyro1_fire: ");
-  Serial.println(system_config.dmx_pyro1_fire);
-
-  file.close();
-
-  Serial.println("Config loaded \n");
-
-  return true;
-}
 
 void setup_config()
 {
@@ -304,7 +91,7 @@ void setup_config()
   }
 
   // load config
-  if (!load_config())
+  if (!load_config(&system_config))
   {
     Serial.println("Failed to load config \n");
     system_state = FAILED;
@@ -341,9 +128,6 @@ void setup_outputs()
   {
     return;
   }
-
-  Serial.begin(115200);
-  Serial.println("Serial started \n");
 
   pinMode(led_pin, OUTPUT);
   digitalWrite(led_pin, 0);
@@ -392,7 +176,6 @@ void setup_pyro()
 
 void setup_dmx()
 {
-
   // Check if already setup
   if (setup_settings_done)
   {
@@ -413,7 +196,7 @@ void setup_dmx()
   setup_dmx_done = true;
 }
 
-void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
+void on_ws_event(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
 {
   if (type == WS_EVT_CONNECT)
   {
@@ -473,12 +256,12 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
           }
 
           // load the config
-          if (!load_config())
+          if (!load_config(&system_config))
           {
             client->text("Failed to load config");
             return;
           }
-          
+
           // successful
           client->text("Saved config \n");
         }
@@ -495,7 +278,6 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 
 void setup_settings()
 {
-
   // Check if already setup
   if (setup_settings_done)
   {
@@ -513,9 +295,12 @@ void setup_settings()
   Serial.println("DNS server started \n");
 
   // Setup the webserver
-  ws.onEvent(onWsEvent);
+  ws.onEvent(on_ws_event);
   server.addHandler(&ws);
-  server.serveStatic("/", LittleFS, "/www/").setDefaultFile("index.html");
+  server.serveStatic("/config", LittleFS, "/www/").setDefaultFile("index.html");
+  server.onNotFound([](AsyncWebServerRequest *request){
+    request->redirect("/config/index.html");
+  });
   server.onNotFound([](AsyncWebServerRequest *request)
                     { request->send(404); });
   server.begin();
@@ -527,9 +312,9 @@ void setup_settings()
 
 void setup()
 {
-
-  //delay for 5 seconds
-  delay(5000);
+  // setup serial
+  Serial.begin(115200);
+  Serial.println("Serial started \n");
 
   // Setup hardware required by all
   setup_config();
@@ -573,6 +358,7 @@ void setup()
   }
 
   Serial.println("Setup Complete! \n");
+  setup_done = true;
 
   // wait for dmx
   delay(50);
@@ -582,14 +368,12 @@ void setup()
 
 void loop_inputs(Inputs *inputs)
 {
-
   inputs->pyro0_measure = analogRead(pyro0_measure_pin);
   inputs->pyro1_measure = analogRead(pyro1_measure_pin);
 }
 
 void loop_outputs(Outputs outputs)
 {
-
   digitalWrite(pyro0_led_pin, outputs.pyro0_led);
   digitalWrite(pyro1_led_pin, outputs.pyro1_led);
 
@@ -620,126 +404,48 @@ void loop_outputs(Outputs outputs)
 
 void loop_pyro(Pyro pyro)
 {
-
   digitalWrite(pyro0_fire_pin, pyro.pyro0_fire);
   digitalWrite(pyro1_fire_pin, pyro.pyro1_fire);
 }
 
 void loop_dmx(DMX *dmx)
 {
-
   if (millis() > 50 + dmxInput.latest_packet_timestamp())
   {
-
     dmx->data = false;
   }
   else
   {
-
     dmx->data = true;
   }
 }
 
 void loop_settings()
 {
-
   dnsServer.processNextRequest();
-}
-
-void loop_logic(DMX dmx, Inputs inputs, Outputs *outputs, Pyro *pyro)
-{
-
-  // check pyro 0 for auth and fire
-  if (dmx.data && dmx_buffer[system_config.dmx_address + 0] == system_config.dmx_pyro0_auth && dmx_buffer[system_config.dmx_address + 1] == system_config.dmx_pyro0_fire)
-  {
-    pyro->pyro0_fire = 1;
-  }
-  else
-  {
-    pyro->pyro0_fire = 0;
-  }
-
-  // check pyro 1 for auth and fire
-  if (dmx.data && dmx_buffer[system_config.dmx_address + 2] == system_config.dmx_pyro1_auth && dmx_buffer[system_config.dmx_address + 3] == system_config.dmx_pyro1_fire)
-  {
-    pyro->pyro1_fire = 1;
-  }
-  else
-  {
-    pyro->pyro1_fire = 0;
-  }
-
-  // check pyro 0 measured above threshold and set led
-  if (inputs.pyro0_measure > system_config.voltage_threshold)
-  {
-    outputs->pyro0_led = 1;
-  }
-  else
-  {
-    outputs->pyro0_led = 0;
-  }
-
-  // check pyro 1 measured above threshold and set led
-  if (inputs.pyro1_measure > system_config.voltage_threshold)
-  {
-    outputs->pyro1_led = 1;
-  }
-  else
-  {
-    outputs->pyro1_led = 0;
-  }
-
-  // force all outputs to 0 if system failed
-  if (system_state == FAILED)
-  {
-    outputs->pyro0_led = 0;
-    outputs->pyro1_led = 0;
-    pyro->pyro0_fire = 0;
-    pyro->pyro1_fire = 0;
-  }
-
-  // check system state and set status led
-  if (system_state == ACTIVE)
-  {
-    // check dmx data and set status led
-    if (dmx.data)
-    {
-      outputs->status_led = LED_ACTIVE;
-    }
-    else
-    {
-      outputs->status_led = LED_ERROR;
-    }
-  }
-  else if (system_state == SETTINGS)
-  {
-    outputs->status_led = LED_SETUP;
-  }
-  else
-  {
-    outputs->status_led = LED_FAILED;
-  }
 }
 
 void loop()
 {
+  // main control loop for core0
+  // all processing should be done here
 
-  // Local vars
-  DMX dmx;
-  Inputs inputs;
-  Outputs outputs;
-  Pyro pyro;
+  // local vars
+  DMX dmx = {0};
+  Inputs inputs = {0, 0};
+  Outputs outputs = {0, 0, LED_FAILED};
+  Pyro pyro = {0, 0};
 
-  // Main control loop
+  // control loop
   switch (system_state)
   {
-
   case SETTINGS:
+
     loop_dmx(&dmx);
     loop_inputs(&inputs);
-
-    loop_logic(dmx, inputs, &outputs, &pyro);
+    
     loop_settings();
+    proccess_logic(system_state, dmx, inputs, &outputs, &pyro);
 
     loop_outputs(outputs);
 
@@ -750,7 +456,7 @@ void loop()
     loop_dmx(&dmx);
     loop_inputs(&inputs);
 
-    loop_logic(dmx, inputs, &outputs, &pyro);
+    proccess_logic(system_state, dmx, inputs, &outputs, &pyro);
 
     loop_outputs(outputs);
     loop_pyro(pyro);
@@ -759,7 +465,7 @@ void loop()
 
   case FAILED:
 
-    loop_logic(dmx, inputs, &outputs, &pyro);
+    proccess_logic(system_state, dmx, inputs, &outputs, &pyro);
 
     loop_outputs(outputs);
 
