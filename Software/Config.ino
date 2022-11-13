@@ -162,4 +162,3 @@ bool load_config(Config *config)
 
   return true;
 }
-

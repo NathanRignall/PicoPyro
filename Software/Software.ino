@@ -141,6 +141,7 @@ void setup_outputs()
   digitalWrite(pyro1_led_pin, 0);
   Serial.println("Pyro1 led setup \n");
 
+  // setup the status led and set it to white
   status_led_pixels = new Adafruit_NeoPixel(1, status_led_pin, status_led_format);
   status_led_pixels->begin();
   status_led_pixels->setBrightness(50);
@@ -291,18 +292,14 @@ void setup_settings()
   Serial.println("Wifi AP started \n");
 
   // Setup DNS server
-  dnsServer.start(DNS_PORT, "*", apIP);
+  dnsServer.start(DNS_PORT, "picopyro", apIP);
+  dnsServer.start(DNS_PORT, "picopyro", apIP);
   Serial.println("DNS server started \n");
 
   // Setup the webserver
   ws.onEvent(on_ws_event);
   server.addHandler(&ws);
-  server.serveStatic("/config", LittleFS, "/www/").setDefaultFile("index.html");
-  server.onNotFound([](AsyncWebServerRequest *request){
-    request->redirect("/config/index.html");
-  });
-  server.onNotFound([](AsyncWebServerRequest *request)
-                    { request->send(404); });
+  server.serveStatic("/", LittleFS, "/www/").setDefaultFile("index.html");
   server.begin();
   Serial.println("Webserver Setup \n");
 
