@@ -105,17 +105,17 @@ bool check_config(StaticJsonDocument<1024> document)
 bool save_config(StaticJsonDocument<1024> document)
 {
 
+  if (!check_config(document))
+  {
+    Serial.println("Config is invalid \n");
+    return false;
+  }
+
   File file = LittleFS.open("/config.json", "w");
 
   if (!file)
   {
     Serial.println("Could not open config for writing \n");
-    return false;
-  }
-
-  if (!check_config(document))
-  {
-    Serial.println("Config is invalid \n");
     return false;
   }
 
@@ -141,6 +141,8 @@ bool load_config(Config *config)
 
   StaticJsonDocument<1024> document;
   DeserializationError error = deserializeJson(document, file);
+
+  file.close();
 
   if (error)
   {
@@ -174,8 +176,6 @@ bool load_config(Config *config)
   Serial.println(config->dmx_pyro0_fire);
   Serial.print("dmx_pyro1_fire: ");
   Serial.println(config->dmx_pyro1_fire);
-
-  file.close();
 
   Serial.println("Config loaded \n");
 
