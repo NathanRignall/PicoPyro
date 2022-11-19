@@ -221,7 +221,7 @@ void on_ws_event(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventT
     return_doc["config"]["dmx_pyro1_auth"] = system_config.dmx_pyro1_auth;
     return_doc["config"]["dmx_pyro0_fire"] = system_config.dmx_pyro0_fire;
     return_doc["config"]["dmx_pyro1_fire"] = system_config.dmx_pyro1_fire;
-    return_doc["status"] = "Config sent";
+    return_doc["status"] = "Existing config loaded";
     serializeJson(return_doc, output);
     client->text(output);
   }

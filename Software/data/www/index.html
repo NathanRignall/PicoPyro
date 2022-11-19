@@ -13,6 +13,7 @@
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      margin: 0px;
     }
 
     .form-item {
@@ -27,7 +28,7 @@
 
     .form-item input {
       display: block;
-      width: 100%;
+      width: calc(100% - 30px);
       padding: 10px 15px;
       background-color: white;
       border: 1px solid #ccc;
@@ -62,8 +63,9 @@
 </head>
 
 <body>
-  <main style="width:80%;margin: 0 auto;">
-    <h1>Pico Pyro</h1>
+  <main style="width:80vw;margin: 0 auto;">
+    <h1 style="margin-bottom: 0;">Pico Pyro</h1>
+    <p style="margin-top: 3px;">v1.0.0</p>
 
     <section>
       <form id="config">
