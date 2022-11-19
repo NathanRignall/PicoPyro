@@ -20,7 +20,7 @@
 // ------ Shared variables ------
 
 enum State system_state = BOOT;
-struct Config system_config = {0, 0, 255, 255, 255, 255};
+struct Config system_config = {100, 1, 255, 255, 255, 255};
 
 bool setup_done = false;
 bool setup_config_done = false;
@@ -407,6 +407,9 @@ void setup()
 
   Serial.println("Setup Complete! \n");
   setup_done = true;
+
+  // print version message
+  Serial.println("Nathan Rignall - Pico Pyro - v1.0.0 \n");
 
   // wait for dmx
   delay(50);
