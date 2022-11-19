@@ -409,10 +409,10 @@ void setup()
   setup_done = true;
 
   // print version message
-  Serial.println("Nathan Rignall - Pico Pyro - v1.0.0 \n");
+  Serial.println("Nathan Rignall - Pico Pyro - v1.0.1 \n");
 
   // wait for dmx
-  delay(50);
+  delay(150);
 }
 
 // ------ Loop functions ------
@@ -461,7 +461,7 @@ void loop_pyro(Pyro pyro)
 
 void loop_dmx(DMX *dmx)
 {
-  if (millis() > 50 + dmxInput.latest_packet_timestamp())
+  if (millis() > 150 + dmxInput.latest_packet_timestamp())
   {
     dmx->data = false;
   }
