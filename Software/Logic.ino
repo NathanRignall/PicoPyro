@@ -1,3 +1,9 @@
+/* Copyright (C) 2022 Nathan Rignall
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Last modified 2022-11
+ */
+
 #include "software.h"
 
 void proccess_logic(State state, DMX dmx, Inputs inputs, Outputs *outputs, Pyro *pyro)

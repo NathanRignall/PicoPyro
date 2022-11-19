@@ -1,3 +1,9 @@
+/* Copyright (C) 2022 Nathan Rignall
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Last modified 2022-11
+ */
+
 #ifndef SOFYWARE_H
 #define SOFYWARE_H
 

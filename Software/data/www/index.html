@@ -1,9 +1,249 @@
+<!-- Copyright (C) 2022 Nathan Rignall
+     Unauthorized copying of this file, via any medium is strictly prohibited
+     Proprietary and confidential
+     Last modified 2022-11 -->
+
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title>TEST</title>
-  </head>
-  <body>
-    <h1>TEST</h1>
-  </body>
+
+<head>
+  <title>Pico Pyro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    }
+
+    .form-item {
+      margin-bottom: 1em;
+    }
+
+    .form-item label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 0.5em;
+    }
+
+    .form-item input {
+      display: block;
+      width: 100%;
+      padding: 10px 15px;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      display: inline-block;
+      padding: 16px 32px;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      transition-duration: 0.4s;
+      background-color: white;
+      color: black;
+      border: 2px solid #4c7caf;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #4c7caf;
+      color: white;
+    }
+
+    button:disabled,
+    button[disabled] {
+      background-color: #cccccc;
+      color: #666666;
+      border: 2px solid #cccccc;
+    }
+  </style>
+</head>
+
+<body>
+  <main style="width:80%;margin: 0 auto;">
+    <h1>Pico Pyro</h1>
+
+    <section>
+      <form id="config">
+
+        <div class="form-item">
+          <label for="voltage_threshold">Voltage Threshold</label>
+          <input type="number" id="voltage_threshold" name="voltage_threshold" required disabled />
+        </div>
+
+        <div class="form-item">
+          <label for="dmx_address">DMX Address</label>
+          <input type="number" id="dmx_address" name="dmx_address" required disabled />
+        </div>
+
+        <div class="form-item">
+          <label for="dmx_pyro0_auth">DMX Pyro0 Auth</label>
+          <input type="number" id="dmx_pyro0_auth" name="dmx_pyro0_auth" required disabled />
+        </div>
+
+        <div class="form-item">
+          <label for="dmx_pyro1_auth">DMX Pyro1 Auth</label>
+          <input type="number" id="dmx_pyro1_auth" name="dmx_pyro1_auth" required disabled />
+        </div>
+
+        <div class="form-item">
+          <label for="dmx_pyro0_fire">DMX Pyro0 Fire</label>
+          <input type="number" id="dmx_pyro0_fire" name="dmx_pyro0_fire" required disabled />
+        </div>
+
+        <div class="form-item">
+          <label for="dmx_pyro1_fire">DMX Pyro1 Fire</label>
+          <input type="number" id="dmx_pyro1_fire" name="dmx_pyro1_fire" required disabled />
+        </div>
+
+        <button id="config-save" type="submit" disabled>Save</button>
+        <button id="edit" disabled type="button">Edit</button>
+      </form>
+    </section>
+
+
+    <p id="status"></p>
+    <p id="loading">Loading...</p>
+
+  </main>
+</body>
+
+<script>
+  var edit_mode = false;
+  var orginal_config = {};
+
+  function update_form(config) {
+    document.getElementById("voltage_threshold").value = config.voltage_threshold;
+    document.getElementById("dmx_address").value = config.dmx_address;
+    document.getElementById("dmx_pyro0_auth").value = config.dmx_pyro0_auth;
+    document.getElementById("dmx_pyro1_auth").value = config.dmx_pyro1_auth;
+    document.getElementById("dmx_pyro0_fire").value = config.dmx_pyro0_fire;
+    document.getElementById("dmx_pyro1_fire").value = config.dmx_pyro1_fire;
+  }
+
+  function disable_form() {
+    document.getElementById("voltage_threshold").disabled = true;
+    document.getElementById("dmx_address").disabled = true;
+    document.getElementById("dmx_pyro0_auth").disabled = true;
+    document.getElementById("dmx_pyro1_auth").disabled = true;
+    document.getElementById("dmx_pyro0_fire").disabled = true;
+    document.getElementById("dmx_pyro1_fire").disabled = true;
+    document.getElementById("config-save").disabled = true;
+  }
+
+  function enable_form() {
+    document.getElementById("voltage_threshold").disabled = false;
+    document.getElementById("dmx_address").disabled = false;
+    document.getElementById("dmx_pyro0_auth").disabled = false;
+    document.getElementById("dmx_pyro1_auth").disabled = false;
+    document.getElementById("dmx_pyro0_fire").disabled = false;
+    document.getElementById("dmx_pyro1_fire").disabled = false;
+    document.getElementById("config-save").disabled = false;
+  }
+
+  function set_loading() {
+    document.getElementById("loading").style.display = "block";
+    document.getElementById("edit").disabled = true;
+  }
+
+  function set_not_loading() {
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("edit").disabled = false;
+  }
+
+  var socket = new WebSocket("ws://10.66.0.1/ws");
+
+  socket.onopen = function () {
+    console.log("Connected to websocket");
+  };
+
+  socket.onclose = function () {
+    console.log("Disconnected from websocket");
+  };
+
+  socket.onerror = function (error) {
+    console.log("Error: " + error);
+  };
+
+  socket.onmessage = function (event) {
+    var data = JSON.parse(event.data);
+    orginal_data = data;
+
+    // check if has config key
+    if (data.hasOwnProperty("config")) {
+      orginal_config = data.config;
+
+      update_form(data.config);
+      set_not_loading();
+
+      // disable form
+      edit_mode = false;
+      disable_form();
+      document.getElementById("edit").innerHTML = "Edit";
+    }
+
+    //check if has status key
+    if (data.hasOwnProperty("status")) {
+      document.getElementById("status").innerHTML = data.status;
+      set_not_loading();
+
+      // edit mode
+      edit_mode = false;
+      disable_form();
+      document.getElementById("edit").innerHTML = "Edit";
+
+      // use orginal config
+      update_form(orginal_config);
+    }
+  };
+
+  // when edit button is clicked
+  document.getElementById("edit").addEventListener("click", function () {
+
+    // clear status
+    document.getElementById("status").innerHTML = "";
+
+    // toggle edit mode
+    edit_mode = !edit_mode;
+
+    if (edit_mode) {
+
+      document.getElementById("edit").innerHTML = "Cancel";
+      enable_form();
+      update_form(orginal_config);
+
+    } else {
+
+      document.getElementById("edit").innerHTML = "Edit";
+      disable_form();
+      update_form(orginal_config);
+
+    }
+  });
+
+  // when form is submitted
+  var form = document.getElementById("config");
+  form.addEventListener("submit", function (event) {
+    // stop form from submitting
+    event.preventDefault();
+
+    // get form data
+    var data = {};
+    for (var i = 0; i < form.elements.length; i++) {
+      var element = form.elements[i];
+      if (element.name) {
+        data[element.name] = element.value;
+      }
+    }
+
+    disable_form();
+
+    socket.send(JSON.stringify({ config: data }));
+    set_loading();
+  });
+
+</script>
+
 </html>

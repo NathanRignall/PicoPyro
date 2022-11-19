@@ -1,3 +1,9 @@
+/* Copyright (C) 2022 Nathan Rignall
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Last modified 2022-11
+ */
+
 #include "DmxInput.h"
 #include "LittleFS.h"
 #include "ArduinoJson.h"
@@ -13,8 +19,8 @@
 
 // ------ Shared variables ------
 
-enum State system_state;
-struct Config system_config;
+enum State system_state = BOOT;
+struct Config system_config = {0, 0, 255, 255, 255, 255};
 
 bool setup_done = false;
 bool setup_config_done = false;
@@ -199,17 +205,34 @@ void setup_dmx()
 
 void on_ws_event(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
 {
+  // return json object and string
+  StaticJsonDocument<1024> return_doc;
+  String output;
+
   if (type == WS_EVT_CONNECT)
   {
+    // debug message
     Serial.printf("ws[Server: %s][ClientID: %u] WSClient connected\n", server->url(), client->id());
-    client->text("Hello from RP2040W Server");
+
+    // send the current config
+    return_doc["config"]["voltage_threshold"] = system_config.voltage_threshold;
+    return_doc["config"]["dmx_address"] = system_config.dmx_address;
+    return_doc["config"]["dmx_pyro0_auth"] = system_config.dmx_pyro0_auth;
+    return_doc["config"]["dmx_pyro1_auth"] = system_config.dmx_pyro1_auth;
+    return_doc["config"]["dmx_pyro0_fire"] = system_config.dmx_pyro0_fire;
+    return_doc["config"]["dmx_pyro1_fire"] = system_config.dmx_pyro1_fire;
+    return_doc["status"] = "Config sent";
+    serializeJson(return_doc, output);
+    client->text(output);
   }
   else if (type == WS_EVT_DISCONNECT)
   {
+    // debug message
     Serial.printf("ws[Server: %s][ClientID: %u] WSClient disconnected\n", server->url(), client->id());
   }
   else if (type == WS_EVT_ERROR)
   {
+    // debug message
     Serial.printf("ws[Server: %s][ClientID: %u] error(%u): %s\n", server->url(), client->id(), *((uint16_t *)arg), (char *)data);
   }
   else if (type == WS_EVT_DATA)
@@ -224,53 +247,81 @@ void on_ws_event(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventT
         data[len] = 0;
 
         // convert data to json
-        StaticJsonDocument<1024> doc;
-        DeserializationError error = deserializeJson(doc, data);
+        StaticJsonDocument<1024> input_doc;
+        DeserializationError error = deserializeJson(input_doc, data);
 
         // check if there is an error
         if (error)
         {
-          client->text("Could not decode json");
-          Serial.print(F("Could not decode json \n"));
-          Serial.println(error.f_str());
+          // send json error
+          return_doc["status"] = "Could not decode json";
+          serializeJson(return_doc, output);
+          client->text(output);
+
           return;
         }
 
         // check if the message is config
-        if (doc.containsKey("config"))
+        if (input_doc.containsKey("config"))
         {
           // get the config
-          JsonObject config = doc["config"];
+          JsonObject config = input_doc["config"];
 
           // check if the config is valid
-          if (!check_config(config))
+          if (check_config(config))
           {
-            client->text("Invalid config");
-            return;
-          }
 
-          // save the config
-          if (!save_config(config))
+            // save the config
+            if (save_config(config))
+            {
+
+              // load the config
+              if (load_config(&system_config))
+              {
+                // send the new config
+                return_doc["config"]["voltage_threshold"] = system_config.voltage_threshold;
+                return_doc["config"]["dmx_address"] = system_config.dmx_address;
+                return_doc["config"]["dmx_pyro0_auth"] = system_config.dmx_pyro0_auth;
+                return_doc["config"]["dmx_pyro1_auth"] = system_config.dmx_pyro1_auth;
+                return_doc["config"]["dmx_pyro0_fire"] = system_config.dmx_pyro0_fire;
+                return_doc["config"]["dmx_pyro1_fire"] = system_config.dmx_pyro1_fire;
+                return_doc["status"] = "Config saved and loaded";
+                serializeJson(return_doc, output);
+                client->text(output);
+              }
+              else
+              {
+                // send json status
+                return_doc["status"] = "Failed to load config";
+                serializeJson(return_doc, output);
+                client->text(output);
+              }
+            }
+            else
+            {
+              // send json status
+              return_doc["status"] = "Could not save config";
+              serializeJson(return_doc, output);
+              client->text(output);
+            }
+          }
+          else
           {
-            client->text("Failed to save config");
-            return;
+            // send json status
+            return_doc["status"] = "Invalid config";
+            serializeJson(return_doc, output);
+            client->text(output);
           }
-
-          // load the config
-          if (!load_config(&system_config))
-          {
-            client->text("Failed to load config");
-            return;
-          }
-
-          // successful
-          client->text("Saved config \n");
         }
         else
         {
-          client->text("Invalid message");
+          // debug message
           Serial.println("Invalid message \n");
-          return;
+
+          // send json error
+          return_doc["status"] = "Invalid message";
+          serializeJson(return_doc, output);
+          client->text(output);
         }
       }
     }
@@ -440,7 +491,7 @@ void loop()
 
     loop_dmx(&dmx);
     loop_inputs(&inputs);
-    
+
     loop_settings();
     proccess_logic(system_state, dmx, inputs, &outputs, &pyro);
 

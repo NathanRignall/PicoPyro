@@ -1,11 +1,19 @@
+/* Copyright (C) 2022 Nathan Rignall
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Last modified 2022-11
+ */
+
 #include "ArduinoJson.h"
 #include "LittleFS.h"
 
 #include "software.h"
 
+// check the provided json document for correct format
 bool check_config(StaticJsonDocument<1024> document)
 {
 
+  // check all keys are present
   if (!document.containsKey("voltage_threshold"))
   {
     Serial.println("Config is missing voltage_threshold \n");
@@ -42,37 +50,47 @@ bool check_config(StaticJsonDocument<1024> document)
     return false;
   }
 
-  if (document["voltage_threshold"] < 0 || document["voltage_threshold"] > 1023)
+  // save config to temp_config to check if it is valid
+  struct Config temp_config;
+  temp_config.voltage_threshold = document["voltage_threshold"];
+  temp_config.dmx_address = document["dmx_address"];
+  temp_config.dmx_pyro0_auth = document["dmx_pyro0_auth"];
+  temp_config.dmx_pyro1_auth = document["dmx_pyro1_auth"];
+  temp_config.dmx_pyro0_fire = document["dmx_pyro0_fire"];
+  temp_config.dmx_pyro1_fire = document["dmx_pyro1_fire"];
+
+  // check config is in bounds
+  if (temp_config.voltage_threshold < 0 || temp_config.voltage_threshold > 1023)
   {
     Serial.println("Config voltage_threshold is out of bounds \n");
     return false;
   }
 
-  if (document["dmx_address"] < 1 || document["dmx_address"] > 251)
+  if (temp_config.dmx_address < 1 || temp_config.dmx_address > 251)
   {
     Serial.println("Config dmx_address is out of bounds \n");
     return false;
   }
 
-  if (document["dmx_pyro0_auth"] < 0 || document["dmx_pyro0_auth"] > 255)
+  if (temp_config.dmx_pyro0_auth < 0 || temp_config.dmx_pyro0_auth > 255)
   {
     Serial.println("Config dmx_pyro0_auth is out of bounds \n");
     return false;
   }
 
-  if (document["dmx_pyro1_auth"] < 0 || document["dmx_pyro1_auth"] > 255)
+  if (temp_config.dmx_pyro1_auth < 0 || temp_config.dmx_pyro1_auth > 255)
   {
     Serial.println("Config dmx_pyro1_auth is out of bounds \n");
     return false;
   }
 
-  if (document["dmx_pyro0_fire"] < 0 || document["dmx_pyro0_fire"] > 255)
+  if (temp_config.dmx_pyro0_fire < 0 || temp_config.dmx_pyro0_fire > 255)
   {
     Serial.println("Config dmx_pyro0_fire is out of bounds \n");
     return false;
   }
 
-  if (document["dmx_pyro1_fire"] < 0 || document["dmx_pyro1_fire"] > 255)
+  if (temp_config.dmx_pyro1_fire < 0 || temp_config.dmx_pyro1_fire > 255)
   {
     Serial.println("Config dmx_pyro1_fire is out of bounds \n");
     return false;
@@ -83,6 +101,7 @@ bool check_config(StaticJsonDocument<1024> document)
   return true;
 }
 
+// save the provided json document to the config file
 bool save_config(StaticJsonDocument<1024> document)
 {
 
@@ -94,7 +113,6 @@ bool save_config(StaticJsonDocument<1024> document)
     return false;
   }
 
-  // check config is valid
   if (!check_config(document))
   {
     Serial.println("Config is invalid \n");
@@ -109,6 +127,7 @@ bool save_config(StaticJsonDocument<1024> document)
   return true;
 }
 
+// load the config file into config struct
 bool load_config(Config *config)
 {
 
