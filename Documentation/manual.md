@@ -47,6 +47,8 @@ Arming cover can be removed for rehearsals to test the behaviour of the system w
 
 When the arming cover is removed the channels are electrically disconnected and cannot fire. The continuity LEDs will temporarily stop working. Fire LEDs will work as expected but won't fire the pyrotechnic channels.
 
+The recommended method of removing the arming cover is by placing a cable tie through the loop and pulling backwards.
+
 ## DMX
 
 | Channel | Description                         |
