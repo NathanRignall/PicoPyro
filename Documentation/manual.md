@@ -1,4 +1,5 @@
 # Pico Pyro v1.0.1
+DMX controlled dual pyrotechnic channels.
 
 ## Hardware Overview
 ![Hardware Diagram](hardware.png)
