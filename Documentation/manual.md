@@ -83,6 +83,6 @@ Low voltage dropout
 
 ## Troubleshooting
  - The status LED should be constant **GREEN** when in normal operation.
-   - Flickering to RED DMX connection is unstable
+   - Flickering to **RED** DMX connection is unstable
    - Flickering off supplied voltage is too low (especially during firing)
 
