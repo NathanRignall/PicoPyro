@@ -8,14 +8,13 @@ DMX controlled dual pyrotechnic channels.
  - Fire LED - (RED)
  - Configuration Button
  - Arming Cover
+ - DMX In/Out
 
 ![Connections Diagram](connections.png)
  - Power+ (3v-50v)
  - Power-
- - Pyro 0-
- - Pyro 0+
- - Pyro 1-
- - Pyro 1+
+ - Pyro 0/1-
+ - Pyro 0/1+
 
 ## Modes
 The Pico Pyro can be in one of three modes, these are indicated by the status LED.
@@ -34,22 +33,14 @@ If the system detects an invalid configuration during boot the system will enter
 ### Setup
  - Status LED **BLUE**.
  - Continuity LEDs are **GREEN** when the voltage threshold is met across the pyrotechnic channels. These are used to show if there is a good connection across the hardware connected.
- - Fire LEDs and hence pyrotechnic channels off and cannot activate.
+ - Fire LEDs and hence pyrotechnic channels off and ***cannot activate***.
 
 ### Failed
  - Status LED **PURPLE**.
  - Continuity LEDs off and cannot activate.
- - Fire LEDs and hence pyrotechnic channels off and cannot activate.
+ - Fire LEDs and hence pyrotechnic channels off and ***cannot activate***.
 
-## Usage Tips
-Ensure all connections are attached.  
-Arming cover can be removed for rehearsals to test the behaviour of the system without activating pyrotechnic channels.
-
-When the arming cover is removed the channels are electrically disconnected and cannot fire. The continuity LEDs will temporarily stop working. Fire LEDs will work as expected but won't fire the pyrotechnic channels.
-
-The recommended method of removing the arming cover is by placing a cable tie through the loop and pulling backwards.
-
-## DMX
+## DMX Table
 
 | Channel | Description                         |
 | ------- | ----------------------------------- |
@@ -72,17 +63,33 @@ The user should be presented with the following...
 
  - Voltage threshold - (0-1023) - Value used to activate the continuity LEDs. This value is dependant on the supplied voltage. When supplied with around 12v an advised threshold value is 100.
  - DMX Address - (1-251) - Base address for all DMX channels.
- - DMX Pyro0 Auth - (0-255)
- - DMX Pyro1 Auth - (0-255)
- - DMX Pyro0 Fire - (0-255)
- - DMX Pyro1 Fire - (0-255)
+ - DMX Pyro0 Auth - (0-255) - Value required to activate channel
+ - DMX Pyro1 Auth - (0-255) - Value required to activate channel
+ - DMX Pyro0 Fire - (0-255) - Value required to activate channel
+ - DMX Pyro1 Fire - (0-255) - Value required to activate channel
+
+## Usage Tips
+Ensure all connections are attached.
+
+Arming cover can be removed for rehearsals to test the behaviour of the system without activating pyrotechnic channels.  
+When the arming cover is removed the channels are electrically disconnected and cannot fire. The continuity LEDs will temporarily stop working. Fire LEDs will work as expected but won't fire the pyrotechnic channels.  
+The recommended method of removing the arming cover is by placing a cable tie through the loop and pulling backwards.
+
+Do not set the activation value to 255, this will increase the chance of accidental activation.  
+Instead use a selection of unique, different values.
+
+The easiest way to integrate this system into lighting software is by patching 4 dimmer channels.
 
 ## Electronics
 Voltage dividers are used for the continuity detection.  
-Low voltage dropout
+Low voltage dropout is in the voltage regulator.
 
 ## Troubleshooting
  - The status LED should be constant **GREEN** when in normal operation.
    - Flickering to **RED** DMX connection is unstable
    - Flickering off supplied voltage is too low (especially during firing)
+ - When not activating as expected this could be because the Grand Master is lowering the values slightly.
+   - To combat this happening set the 'cue' to ignore the Grand Master
 
+## Legal
+We accept no responsibility for the consequences of activating a pyrotechnic.
